@@ -61,7 +61,7 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
-	updateBook := models.Book{}
+	updateBook := &models.Book{}
 	utils.ParseBody(r, updateBook)
 
 	vars := mux.Vars(r)
