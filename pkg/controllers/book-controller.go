@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/gyurebalint/golang_bookstore_api/pkg/fetch"
 	"github.com/gyurebalint/golang_bookstore_api/pkg/models"
 	"github.com/gyurebalint/golang_bookstore_api/pkg/utils"
 )
@@ -40,6 +41,13 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 	CreateBook := &models.Book{}
 	utils.ParseBody(r, CreateBook)
 
+	if CreateBook.Title == "" {
+		w.Header().Set("Content-Type", "pkglication/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("error while parsing"))
+		return
+	}
+
 	b := CreateBook.CreateBook()
 	res, _ := json.Marshal(b)
 	w.WriteHeader(http.StatusOK)
@@ -71,17 +79,29 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("error while parsing")
 	}
 	bookDetails, db := models.GetBookById(ID)
-	if updateBook.Name != "" {
-		bookDetails.Name = updateBook.Name
+	if updateBook.Title != "" {
+		bookDetails.Title = updateBook.Title
 	}
-	if updateBook.Author != "" {
-		bookDetails.Author = updateBook.Author
+	if updateBook.Authors != "" {
+		bookDetails.Authors = updateBook.Authors
 	}
 	if updateBook.Publication != "" {
 		bookDetails.Publication = updateBook.Publication
 	}
 	db.Save(&bookDetails)
 	res, _ := json.Marshal(bookDetails)
+	w.Header().Set("Content-Type", "pkglication/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+}
+
+func ImportBook(w http.ResponseWriter, r *http.Request) {
+	BookWithAmazonLink := &models.Book{}
+	utils.ParseBody(r, BookWithAmazonLink)
+
+	var book models.Book = fetch.ScrapeBookFromAmazon(BookWithAmazonLink.Link)
+
+	res, _ := json.Marshal(book)
 	w.Header().Set("Content-Type", "pkglication/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(res)
